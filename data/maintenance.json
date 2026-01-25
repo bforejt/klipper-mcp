@@ -1,0 +1,11 @@
+{
+  "printer": "Voron",
+  "created": "2025-01-01T00:00:00",
+  "maintenance_records": [],
+  "component_hours": {
+    "nozzle": 0,
+    "belts": 0,
+    "linear_rails": 0,
+    "filters": 0
+  }
+}

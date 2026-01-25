@@ -1,0 +1,21 @@
+[Unit]
+Description=Klipper MCP Server
+After=network.target moonraker.service
+Wants=moonraker.service
+
+[Service]
+Type=simple
+User=biqu
+Group=biqu
+WorkingDirectory=/home/biqu/klipper-mcp
+Environment="PATH=/home/biqu/klipper-mcp/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/home/biqu/klipper-mcp/venv/bin/python server.py
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/klipper-mcp.log
+StandardError=append:/var/log/klipper-mcp.log
+
+[Install]
+WantedBy=multi-user.target

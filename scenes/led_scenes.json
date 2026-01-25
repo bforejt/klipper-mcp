@@ -1,0 +1,93 @@
+{
+  "scenes": {
+    "idle": {
+      "description": "Gentle breathing animation when printer is idle",
+      "commands": [
+        "STOP_LED_EFFECTS",
+        "SET_LED_EFFECT EFFECT=sb_logo_breathing"
+      ]
+    },
+    "heating": {
+      "description": "Warm pulse animation during heating",
+      "commands": [
+        "STOP_LED_EFFECTS",
+        "SET_LED_EFFECT EFFECT=sb_nozzle_heating"
+      ]
+    },
+    "printing": {
+      "description": "Steady illumination for printing",
+      "commands": [
+        "STOP_LED_EFFECTS",
+        "SET_LED_EFFECT EFFECT=case_white"
+      ]
+    },
+    "tool_change": {
+      "description": "Animation during tool changes",
+      "commands": [
+        "SET_LED_EFFECT EFFECT=sb_logo_rainbow"
+      ]
+    },
+    "complete": {
+      "description": "Success animation when print completes",
+      "commands": [
+        "STOP_LED_EFFECTS",
+        "SET_LED_EFFECT EFFECT=sb_logo_rainbow",
+        "SET_LED_EFFECT EFFECT=case_rainbow"
+      ]
+    },
+    "error": {
+      "description": "Red alert for errors",
+      "commands": [
+        "STOP_LED_EFFECTS",
+        "SET_LED LED=sb_leds RED=1 GREEN=0 BLUE=0"
+      ]
+    },
+    "off": {
+      "description": "All LEDs off",
+      "commands": [
+        "STOP_LED_EFFECTS",
+        "SET_LED LED=sb_leds RED=0 GREEN=0 BLUE=0"
+      ]
+    },
+    "party": {
+      "description": "Celebration mode!",
+      "commands": [
+        "STOP_LED_EFFECTS",
+        "SET_LED_EFFECT EFFECT=sb_logo_rainbow",
+        "SET_LED_EFFECT EFFECT=sb_nozzle_rainbow",
+        "SET_LED_EFFECT EFFECT=case_rainbow"
+      ]
+    },
+    "night": {
+      "description": "Dim lighting for night printing",
+      "commands": [
+        "STOP_LED_EFFECTS",
+        "SET_LED LED=sb_leds RED=0.1 GREEN=0.1 BLUE=0.1",
+        "SET_LED LED=case_leds RED=0.05 GREEN=0.05 BLUE=0.05"
+      ]
+    }
+  },
+  "available_effects": [
+    "sb_logo_breathing",
+    "sb_logo_rainbow",
+    "sb_logo_critical",
+    "sb_nozzle_heating",
+    "sb_nozzle_cooling",
+    "sb_nozzle_rainbow",
+    "case_white",
+    "case_rainbow",
+    "case_breathing"
+  ],
+  "led_strips": [
+    {
+      "name": "sb_leds",
+      "description": "Stealthburner LEDs (logo + nozzle)",
+      "count": 8
+    },
+    {
+      "name": "case_leds",
+      "description": "Case/chamber LED strip",
+      "count": 50
+    }
+  ]
+}
