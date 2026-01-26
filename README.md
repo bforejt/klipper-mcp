@@ -190,7 +190,7 @@ ssh biqu@192.168.x.x  # or pi@192.168.x.x for Raspberry Pi
 
 # 2. Clone the repository
 cd ~
-git clone https://github.com/yourusername/klipper-mcp.git
+git clone https://github.com/Charleslotto/klipper-mcp.git
 cd klipper-mcp
 
 # 3. Create config from template
