@@ -83,8 +83,10 @@ def register_filesystem_tools(mcp):
         
         gcode_files = []
         for f in files:
+            # API returns 'path' not 'filename'
+            fname = f.get("path") or f.get("filename") or "unknown"
             gcode_files.append({
-                "filename": f.get("filename"),
+                "filename": fname,
                 "size_mb": round(f.get("size", 0) / 1024 / 1024, 2),
                 "modified": f.get("modified"),
             })

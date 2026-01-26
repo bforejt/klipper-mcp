@@ -13,6 +13,8 @@ from .spoolman import register_spoolman_tools
 from .notifications import register_notification_tools
 from .backup import register_backup_tools
 from .gcode_analysis import register_gcode_analysis_tools
+from .system import register_system_tools
+from .tmc import register_tmc_tools
 
 
 def register_all_tools(mcp):
@@ -29,3 +31,5 @@ def register_all_tools(mcp):
     register_notification_tools(mcp)
     register_backup_tools(mcp)
     register_gcode_analysis_tools(mcp)
+    register_system_tools(mcp)
+    register_tmc_tools(mcp)

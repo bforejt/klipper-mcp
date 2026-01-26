@@ -143,7 +143,7 @@ def register_notification_tools(mcp):
             level = "error"
         
         # Use the generic notification system
-        notification_result = await send_notification.__wrapped__(title, message, level)
+        notification_result = await send_notification(title, message, level)
         
         # Also do TTS announcement if enabled
         if config.TTS_ENABLED:
@@ -185,7 +185,7 @@ def register_notification_tools(mcp):
         
         level = "error" if alert_type == "thermal_runaway" else "warning"
         
-        return await send_notification.__wrapped__(
+        return await send_notification(
             f"Temperature Alert - {config.PRINTER_NAME}",
             message,
             level
@@ -224,7 +224,7 @@ def register_notification_tools(mcp):
         Send a test notification to all configured channels.
         Useful for verifying notification setup.
         """
-        return await send_notification.__wrapped__(
+        return await send_notification(
             "Test Notification",
             "This is a test notification from Klipper MCP server. If you received this, notifications are working!",
             "info"

@@ -1,35 +1,46 @@
 """
 Klipper MCP Server Configuration
-Configure your Voron printer settings here.
+Copy this file to config.py and customize for your printer.
+
+  cp config.example.py config.py
+  nano config.py
 """
 import os
 
 # =============================================================================
 # MOONRAKER CONNECTION
 # =============================================================================
+# URL to your Moonraker instance (usually localhost if running on same machine)
 MOONRAKER_URL = os.getenv("MOONRAKER_URL", "http://localhost:7125")
+
+# Display name for your printer
 PRINTER_NAME = "Voron"
 
 # =============================================================================
 # MCP SERVER SETTINGS
 # =============================================================================
-MCP_HOST = "0.0.0.0"  # Listen on all interfaces for remote access
+# Host: 0.0.0.0 = listen on all interfaces (required for remote access)
+#       127.0.0.1 = localhost only
+MCP_HOST = "0.0.0.0"
 MCP_PORT = int(os.getenv("MCP_PORT", "8000"))
 
 # =============================================================================
-# SECURITY
+# SECURITY - IMPORTANT: Change these values!
 # =============================================================================
-# API key for authenticating MCP clients (generate a strong random key)
-API_KEY = os.getenv("API_KEY", "change-me-to-a-secure-key")
+# API key for authenticating MCP clients
+# Generate a strong random key: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+API_KEY = os.getenv("API_KEY", "CHANGE-ME-TO-A-SECURE-KEY")
 
-# Armed mode - when False, dangerous commands are blocked
-ARMED = os.getenv("ARMED", "true").lower() == "true"
+# Armed mode - when False, dangerous commands (gcode, temp changes) are blocked
+# Set to True once you've verified everything works
+ARMED = os.getenv("ARMED", "false").lower() == "true"
 
-# Admin PIN for destructive operations (delete, restore, emergency stop)
+# Admin PIN for destructive operations (delete files, restore config, reboot)
 ADMIN_PIN = os.getenv("ADMIN_PIN", "123456")
 
 # =============================================================================
-# FILE PATHS (CB1/Raspberry Pi paths)
+# FILE PATHS
+# Adjust these paths for your setup (default: BTT CB1 with printer_data)
 # =============================================================================
 PRINTER_DATA_PATH = os.getenv("PRINTER_DATA_PATH", "/home/biqu/printer_data")
 CONFIG_PATH = f"{PRINTER_DATA_PATH}/config"
@@ -37,7 +48,7 @@ GCODES_PATH = f"{PRINTER_DATA_PATH}/gcodes"
 LOGS_PATH = f"{PRINTER_DATA_PATH}/logs"
 BACKUP_PATH = f"{PRINTER_DATA_PATH}/backups"
 
-# Allowed paths for file operations (security)
+# Security: Only allow file operations in these directories
 ALLOWED_PATHS = [
     CONFIG_PATH,
     GCODES_PATH,
@@ -48,19 +59,21 @@ ALLOWED_PATHS = [
 # =============================================================================
 # CAMERA SETTINGS
 # =============================================================================
+# Crowsnest/mjpg-streamer URLs
 CAMERA_SNAPSHOT_URL = os.getenv("CAMERA_SNAPSHOT_URL", "http://localhost/webcam/?action=snapshot")
 CAMERA_STREAM_URL = os.getenv("CAMERA_STREAM_URL", "http://localhost/webcam/?action=stream")
 
 # =============================================================================
-# SPOOLMAN SETTINGS (optional)
+# SPOOLMAN SETTINGS (optional filament tracking)
+# https://github.com/Donkie/Spoolman
 # =============================================================================
-SPOOLMAN_ENABLED = os.getenv("SPOOLMAN_ENABLED", "true").lower() == "true"
+SPOOLMAN_ENABLED = os.getenv("SPOOLMAN_ENABLED", "false").lower() == "true"
 SPOOLMAN_URL = os.getenv("SPOOLMAN_URL", "http://localhost:7912")
 
 # =============================================================================
-# NOTIFICATION SETTINGS
+# NOTIFICATION SETTINGS (all optional)
 # =============================================================================
-# ntfy.sh (free, self-hostable)
+# ntfy.sh - free, self-hostable push notifications
 NTFY_ENABLED = os.getenv("NTFY_ENABLED", "false").lower() == "true"
 NTFY_URL = os.getenv("NTFY_URL", "https://ntfy.sh")
 NTFY_TOPIC = os.getenv("NTFY_TOPIC", "voron-printer")
@@ -76,21 +89,21 @@ SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY", "")
 PUSHOVER_API_TOKEN = os.getenv("PUSHOVER_API_TOKEN", "")
 
-# TTS (Text-to-Speech) - plays on CB1 speaker
+# Text-to-Speech (plays on CB1/Pi speaker if available)
 TTS_ENABLED = os.getenv("TTS_ENABLED", "false").lower() == "true"
 TTS_RATE = int(os.getenv("TTS_RATE", "150"))
 TTS_VOLUME = float(os.getenv("TTS_VOLUME", "0.8"))
 
 # =============================================================================
-# STEALTHCHANGER SETTINGS
+# TOOLCHANGER / STEALTHCHANGER SETTINGS
 # =============================================================================
-# Number of tools configured
-TOOL_COUNT = int(os.getenv("TOOL_COUNT", "3"))
+# Number of tools configured (T0, T1, T2, etc.)
+TOOL_COUNT = int(os.getenv("TOOL_COUNT", "1"))
 
-# Tool names (optional, for display)
+# Tool display names (optional)
 TOOL_NAMES = {
     0: "T0",
-    1: "T1", 
+    1: "T1",
     2: "T2",
     3: "T3",
 }
@@ -98,10 +111,11 @@ TOOL_NAMES = {
 # =============================================================================
 # MAINTENANCE TRACKING
 # =============================================================================
+# Path to store maintenance data
 MAINTENANCE_DATA_FILE = os.getenv("MAINTENANCE_DATA_FILE", "/home/biqu/klipper-mcp/data/maintenance.json")
 AUDIT_LOG_FILE = os.getenv("AUDIT_LOG_FILE", "/home/biqu/klipper-mcp/data/audit.log")
 
-# Maintenance intervals (in hours)
+# Maintenance intervals (in print hours)
 MAINTENANCE_INTERVALS = {
     "nozzle_change": 500,
     "belt_tension": 200,
@@ -119,4 +133,3 @@ LED_SCENES_FILE = os.getenv("LED_SCENES_FILE", "/home/biqu/klipper-mcp/scenes/le
 # Aliases for backward compatibility
 MAINTENANCE_LOG_PATH = MAINTENANCE_DATA_FILE
 AUDIT_LOG_PATH = AUDIT_LOG_FILE
-

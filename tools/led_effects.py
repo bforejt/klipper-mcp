@@ -221,13 +221,29 @@ def register_led_tools(mcp):
         """List all available pre-defined LED scenes."""
         scenes = load_scenes()
         
+        # Ensure scenes is a dict
+        if not isinstance(scenes, dict):
+            return json.dumps({
+                "error": "Invalid scenes configuration",
+                "hint": "LED scenes file should contain a JSON object, not an array",
+                "default_scenes": list(DEFAULT_SCENES.keys())
+            }, indent=2)
+        
         scene_list = []
-        for name, config in scenes.items():
-            scene_list.append({
-                "name": name,
-                "description": config.get("description", ""),
-                "effects_count": len(config.get("effects", []))
-            })
+        for name, scene_config in scenes.items():
+            # Handle case where scene_config might not be a dict
+            if isinstance(scene_config, dict):
+                scene_list.append({
+                    "name": name,
+                    "description": scene_config.get("description", ""),
+                    "effects_count": len(scene_config.get("effects", []))
+                })
+            else:
+                scene_list.append({
+                    "name": name,
+                    "description": "(invalid config)",
+                    "effects_count": 0
+                })
         
         return json.dumps({"scenes": scene_list}, indent=2)
     

@@ -380,3 +380,241 @@ def register_diagnostics_tools(mcp):
                 "available_topics": list(troubleshooting.keys()),
                 "suggestion": "Try describing the symptom differently or check klippy.log for errors"
             }, indent=2)
+
+    @mcp.tool()
+    async def get_log_files() -> str:
+        """
+        List all log files with their sizes and ages.
+        Returns information about klippy.log, moonraker.log, and other logs.
+        """
+        import os
+        from datetime import datetime
+        
+        logs_path = config.LOGS_PATH
+        
+        if not os.path.exists(logs_path):
+            return json.dumps({"error": f"Logs directory not found: {logs_path}"})
+        
+        log_files = []
+        total_size = 0
+        
+        for filename in sorted(os.listdir(logs_path)):
+            filepath = os.path.join(logs_path, filename)
+            if os.path.isfile(filepath):
+                stat = os.stat(filepath)
+                size_mb = stat.st_size / (1024 * 1024)
+                total_size += stat.st_size
+                mtime = datetime.fromtimestamp(stat.st_mtime)
+                
+                log_files.append({
+                    "name": filename,
+                    "size_bytes": stat.st_size,
+                    "size_mb": round(size_mb, 2),
+                    "modified": mtime.strftime("%Y-%m-%d %H:%M:%S"),
+                    "age_days": (datetime.now() - mtime).days
+                })
+        
+        return json.dumps({
+            "logs_path": logs_path,
+            "total_files": len(log_files),
+            "total_size_mb": round(total_size / (1024 * 1024), 2),
+            "files": log_files
+        }, indent=2)
+
+    @mcp.tool()
+    async def clear_old_logs(days_to_keep: int = 7, dry_run: bool = True) -> str:
+        """
+        Clear log files older than specified days.
+        
+        Args:
+            days_to_keep: Keep logs from the last N days (default: 7)
+            dry_run: If True, only show what would be deleted without actually deleting (default: True)
+        """
+        import os
+        from datetime import datetime, timedelta
+        
+        logs_path = config.LOGS_PATH
+        
+        if not os.path.exists(logs_path):
+            return json.dumps({"error": f"Logs directory not found: {logs_path}"})
+        
+        cutoff = datetime.now() - timedelta(days=days_to_keep)
+        
+        to_delete = []
+        kept = []
+        total_freed = 0
+        
+        # Protected files that should never be deleted (current active logs)
+        protected = ["klippy.log", "moonraker.log", "crowsnest.log", 
+                     "KlipperScreen.log", "octoeverywhere.log"]
+        
+        for filename in os.listdir(logs_path):
+            filepath = os.path.join(logs_path, filename)
+            if not os.path.isfile(filepath):
+                continue
+                
+            stat = os.stat(filepath)
+            mtime = datetime.fromtimestamp(stat.st_mtime)
+            size_mb = stat.st_size / (1024 * 1024)
+            
+            # Keep protected (current) log files
+            if filename in protected:
+                kept.append({"name": filename, "reason": "active log", "size_mb": round(size_mb, 2)})
+                continue
+            
+            # Check if older than cutoff
+            if mtime < cutoff:
+                to_delete.append({
+                    "name": filename,
+                    "size_mb": round(size_mb, 2),
+                    "modified": mtime.strftime("%Y-%m-%d %H:%M:%S")
+                })
+                total_freed += stat.st_size
+                
+                if not dry_run:
+                    try:
+                        os.remove(filepath)
+                    except Exception as e:
+                        to_delete[-1]["error"] = str(e)
+            else:
+                kept.append({"name": filename, "reason": "within retention", "size_mb": round(size_mb, 2)})
+        
+        return json.dumps({
+            "dry_run": dry_run,
+            "days_to_keep": days_to_keep,
+            "cutoff_date": cutoff.strftime("%Y-%m-%d"),
+            "files_to_delete": len(to_delete),
+            "space_freed_mb": round(total_freed / (1024 * 1024), 2),
+            "deleted": to_delete,
+            "kept": kept,
+            "message": "Dry run - no files deleted. Set dry_run=false to delete." if dry_run else f"Deleted {len(to_delete)} files"
+        }, indent=2)
+
+    @mcp.tool()
+    async def truncate_log(log_name: str = "klippy", keep_lines: int = 1000) -> str:
+        """
+        Truncate a log file keeping only the most recent lines.
+        Useful for reducing klippy.log size while keeping recent data.
+        
+        Args:
+            log_name: Log file to truncate - 'klippy', 'moonraker', or 'klipper_screen' (default: klippy)
+            keep_lines: Number of recent lines to keep (default: 1000)
+        """
+        import os
+        
+        log_map = {
+            "klippy": "klippy.log",
+            "moonraker": "moonraker.log",
+            "klipper_screen": "KlipperScreen.log",
+            "crowsnest": "crowsnest.log",
+            "octoeverywhere": "octoeverywhere.log"
+        }
+        
+        if log_name not in log_map:
+            return json.dumps({
+                "error": f"Unknown log: {log_name}",
+                "available_logs": list(log_map.keys())
+            })
+        
+        filepath = os.path.join(config.LOGS_PATH, log_map[log_name])
+        
+        if not os.path.exists(filepath):
+            return json.dumps({"error": f"Log file not found: {filepath}"})
+        
+        # Get original size
+        original_size = os.path.getsize(filepath)
+        
+        try:
+            # Read all lines
+            with open(filepath, 'r', errors='replace') as f:
+                lines = f.readlines()
+            
+            original_lines = len(lines)
+            
+            # Keep only last N lines
+            if len(lines) > keep_lines:
+                lines = lines[-keep_lines:]
+            
+            # Write back
+            with open(filepath, 'w') as f:
+                f.writelines(lines)
+            
+            new_size = os.path.getsize(filepath)
+            
+            return json.dumps({
+                "log_file": log_map[log_name],
+                "original_lines": original_lines,
+                "kept_lines": len(lines),
+                "lines_removed": original_lines - len(lines),
+                "original_size_mb": round(original_size / (1024 * 1024), 2),
+                "new_size_mb": round(new_size / (1024 * 1024), 2),
+                "space_freed_mb": round((original_size - new_size) / (1024 * 1024), 2),
+                "status": "success"
+            }, indent=2)
+            
+        except Exception as e:
+            return json.dumps({"error": str(e)})
+
+    @mcp.tool()
+    async def get_log_summary() -> str:
+        """
+        Get a summary of recent log activity - errors, warnings, and events.
+        Scans klippy.log, moonraker.log for the last hour of activity.
+        """
+        import os
+        from datetime import datetime, timedelta
+        
+        logs_path = config.LOGS_PATH
+        one_hour_ago = datetime.now() - timedelta(hours=1)
+        
+        summary = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "period": "last 1 hour",
+            "klippy": {"errors": 0, "warnings": 0, "shutdowns": 0},
+            "moonraker": {"errors": 0, "warnings": 0, "requests": 0},
+            "recent_events": []
+        }
+        
+        # Parse klippy.log
+        klippy_path = os.path.join(logs_path, "klippy.log")
+        if os.path.exists(klippy_path):
+            try:
+                with open(klippy_path, 'r', errors='replace') as f:
+                    # Read last 5000 lines for efficiency
+                    lines = f.readlines()[-5000:]
+                    
+                for line in lines:
+                    line_lower = line.lower()
+                    if 'error' in line_lower:
+                        summary["klippy"]["errors"] += 1
+                    elif 'warning' in line_lower or 'warn' in line_lower:
+                        summary["klippy"]["warnings"] += 1
+                    elif 'shutdown' in line_lower:
+                        summary["klippy"]["shutdowns"] += 1
+                        summary["recent_events"].append({
+                            "source": "klippy",
+                            "type": "shutdown",
+                            "message": line.strip()[:200]
+                        })
+            except Exception as e:
+                summary["klippy"]["error"] = str(e)
+        
+        # Parse moonraker.log
+        moonraker_path = os.path.join(logs_path, "moonraker.log")
+        if os.path.exists(moonraker_path):
+            try:
+                with open(moonraker_path, 'r', errors='replace') as f:
+                    lines = f.readlines()[-2000:]
+                    
+                for line in lines:
+                    line_lower = line.lower()
+                    if 'error' in line_lower:
+                        summary["moonraker"]["errors"] += 1
+                    elif 'warning' in line_lower:
+                        summary["moonraker"]["warnings"] += 1
+                    elif 'request' in line_lower:
+                        summary["moonraker"]["requests"] += 1
+            except Exception as e:
+                summary["moonraker"]["error"] = str(e)
+        
+        return json.dumps(summary, indent=2)
