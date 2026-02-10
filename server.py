@@ -4,13 +4,14 @@ Compatible with Python 3.9+ (CB1/Raspberry Pi)
 Run with: python server.py
 """
 import asyncio
+import inspect
 import json
 import os
 import sys
 import traceback
 from datetime import datetime
 from aiohttp import web
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, get_type_hints
 import html
 
 import config
@@ -904,11 +905,28 @@ async def handle_mcp(request: web.Request) -> web.Response:
         
         elif method == "tools/list":
             tools_list = []
+            type_map = {str: "string", int: "integer", float: "number", bool: "boolean"}
             for name, tool_info in TOOLS.items():
+                func = tool_info["function"]
+                sig = inspect.signature(func)
+                try:
+                    hints = get_type_hints(func)
+                except Exception:
+                    hints = {}
+                properties = {}
+                required = []
+                for param_name, param in sig.parameters.items():
+                    json_type = type_map.get(hints.get(param_name), "string")
+                    properties[param_name] = {"type": json_type}
+                    if param.default is inspect.Parameter.empty:
+                        required.append(param_name)
+                input_schema = {"type": "object", "properties": properties}
+                if required:
+                    input_schema["required"] = required
                 tools_list.append({
                     "name": name,
                     "description": get_tool_description(tool_info),
-                    "inputSchema": {"type": "object", "properties": {}}
+                    "inputSchema": input_schema
                 })
             result = {"tools": tools_list}
         
