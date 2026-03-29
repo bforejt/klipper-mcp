@@ -6,6 +6,7 @@ Copy this file to config.py and customize for your printer.
   nano config.py
 """
 import os
+from pathlib import Path
 
 # =============================================================================
 # MOONRAKER CONNECTION
@@ -40,13 +41,15 @@ ADMIN_PIN = os.getenv("ADMIN_PIN", "123456")
 
 # =============================================================================
 # FILE PATHS
-# Adjust these paths for your setup (default: BTT CB1 with printer_data)
+# KLIPPER_DATA_DIR overrides the base path for non-standard installs.
+# Default: ~/printer_data (works for standard Klipper on any user account)
 # =============================================================================
-PRINTER_DATA_PATH = os.getenv("PRINTER_DATA_PATH", "/home/biqu/printer_data")
-CONFIG_PATH = f"{PRINTER_DATA_PATH}/config"
-GCODES_PATH = f"{PRINTER_DATA_PATH}/gcodes"
-LOGS_PATH = f"{PRINTER_DATA_PATH}/logs"
-BACKUP_PATH = f"{PRINTER_DATA_PATH}/backups"
+_KLIPPER_BASE = Path(os.environ.get("KLIPPER_DATA_DIR", str(Path.home() / "printer_data")))
+PRINTER_DATA_PATH = str(_KLIPPER_BASE)
+CONFIG_PATH = str(_KLIPPER_BASE / "config")
+GCODES_PATH = str(_KLIPPER_BASE / "gcodes")
+LOGS_PATH = str(_KLIPPER_BASE / "logs")
+BACKUP_PATH = str(_KLIPPER_BASE / "backups")
 
 # Security: Only allow file operations in these directories
 ALLOWED_PATHS = [
@@ -111,9 +114,10 @@ TOOL_NAMES = {
 # =============================================================================
 # MAINTENANCE TRACKING
 # =============================================================================
-# Path to store maintenance data
-MAINTENANCE_DATA_FILE = os.getenv("MAINTENANCE_DATA_FILE", "/home/biqu/klipper-mcp/data/maintenance.json")
-AUDIT_LOG_FILE = os.getenv("AUDIT_LOG_FILE", "/home/biqu/klipper-mcp/data/audit.log")
+# Path to store maintenance data (defaults to data/ dir alongside this file)
+_MCP_DATA_DIR = Path(__file__).parent / "data"
+MAINTENANCE_DATA_FILE = os.getenv("MAINTENANCE_DATA_FILE", str(_MCP_DATA_DIR / "maintenance.json"))
+AUDIT_LOG_FILE = os.getenv("AUDIT_LOG_FILE", str(_MCP_DATA_DIR / "audit.log"))
 
 # Maintenance intervals (in print hours)
 MAINTENANCE_INTERVALS = {
@@ -128,7 +132,8 @@ MAINTENANCE_INTERVALS = {
 # =============================================================================
 # LED SCENES
 # =============================================================================
-LED_SCENES_FILE = os.getenv("LED_SCENES_FILE", "/home/biqu/klipper-mcp/scenes/led_scenes.json")
+_MCP_SCENES_DIR = Path(__file__).parent / "scenes"
+LED_SCENES_FILE = os.getenv("LED_SCENES_FILE", str(_MCP_SCENES_DIR / "led_scenes.json"))
 
 # Aliases for backward compatibility
 MAINTENANCE_LOG_PATH = MAINTENANCE_DATA_FILE

@@ -14,14 +14,9 @@ PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.v
 echo "Python version: $PYTHON_VERSION"
 
 # Configuration
-INSTALL_DIR="/home/biqu/klipper-mcp"
+INSTALL_DIR="${KLIPPER_MCP_INSTALL_DIR:-$HOME/klipper-mcp}"
 VENV_DIR="$INSTALL_DIR/venv"
 SERVICE_NAME="klipper-mcp"
-
-# Check if running as biqu user
-if [ "$USER" != "biqu" ]; then
-    echo "Warning: Running as $USER, not biqu"
-fi
 
 # Create installation directory
 echo "Creating installation directory..."
@@ -67,15 +62,19 @@ ADMIN_PIN = "0000"
 EOF
 fi
 
-# Install systemd service
+# Install systemd service (substitute placeholders with current user/paths)
 echo "Installing systemd service..."
-sudo cp "$INSTALL_DIR/klipper-mcp.service" /etc/systemd/system/
+sed -e "s|%%USER%%|$USER|g" \
+    -e "s|%%INSTALL_DIR%%|$INSTALL_DIR|g" \
+    "$INSTALL_DIR/klipper-mcp.service" > /tmp/klipper-mcp.service
+sudo cp /tmp/klipper-mcp.service /etc/systemd/system/klipper-mcp.service
+rm /tmp/klipper-mcp.service
 sudo systemctl daemon-reload
 sudo systemctl enable "$SERVICE_NAME"
 
 # Create log file
 sudo touch /var/log/klipper-mcp.log
-sudo chown biqu:biqu /var/log/klipper-mcp.log
+sudo chown "$USER:$USER" /var/log/klipper-mcp.log
 
 echo ""
 echo "=========================================="

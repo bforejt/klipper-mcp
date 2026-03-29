@@ -8,6 +8,7 @@ import inspect
 import json
 import os
 import sys
+from pathlib import Path
 import traceback
 from datetime import datetime
 from aiohttp import web
@@ -147,7 +148,7 @@ def get_tool_description(tool_info):
 
 def audit_log(action: str, details: dict = None):
     """Write to audit log for security tracking."""
-    log_path = getattr(config, 'AUDIT_LOG_FILE', '/home/biqu/klipper-mcp/data/audit.log')
+    log_path = getattr(config, 'AUDIT_LOG_FILE', str(Path(__file__).parent / "data" / "audit.log"))
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
     
     entry = {
