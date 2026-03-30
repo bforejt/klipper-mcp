@@ -62,6 +62,8 @@ ADMIN_PIN = "0000"
 EOF
 fi
 
+grep -qxF 'klipper-mcp' ~/printer_data/moonraker.asvc || echo 'klipper-mcp' >> ~/printer_data/moonraker.asvc
+
 # Install systemd service (substitute placeholders with current user/paths)
 echo "Installing systemd service..."
 sed -e "s|%%USER%%|$USER|g" \
